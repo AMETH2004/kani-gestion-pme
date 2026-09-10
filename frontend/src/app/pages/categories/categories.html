@@ -1,0 +1,71 @@
+<div class="d-flex gap-2 align-items-center mb-3">
+  <h1 class="h3 mb-0 me-auto">Catégories</h1>
+  @if (peutModifier) {
+    <button class="btn btn-primary" (click)="ouvrirCreation()">
+      <i class="bi bi-plus-lg me-1"></i>Nouvelle catégorie
+    </button>
+  }
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Nom</th>
+          <th>Description</th>
+          <th class="text-end">Produits</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (chargement()) {
+          <tr><td colspan="4" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+        } @else if (categories().length === 0) {
+          <tr><td colspan="4" class="text-center text-muted py-4">Aucune catégorie.</td></tr>
+        } @else {
+          @for (c of categories(); track c.id) {
+            <tr>
+              <td>{{ c.nom }}</td>
+              <td class="text-muted">{{ c.description || '—' }}</td>
+              <td class="text-end">{{ c.produits_count ?? 0 }}</td>
+              <td class="text-end">
+                @if (peutModifier) {
+                  <button class="btn btn-sm btn-outline-secondary me-1" (click)="ouvrirEdition(c)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="supprimer(c)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-modal
+  [ouvert]="modalOuvert()"
+  [titre]="editionId() ? 'Modifier la catégorie' : 'Nouvelle catégorie'"
+  (fermer)="modalOuvert.set(false)"
+>
+  <form [formGroup]="form" id="form-cat" (ngSubmit)="enregistrer()">
+    <div class="mb-3">
+      <label class="form-label">Nom *</label>
+      <input class="form-control" formControlName="nom" />
+    </div>
+    <div class="mb-0">
+      <label class="form-label">Description</label>
+      <input class="form-control" formControlName="description" />
+    </div>
+  </form>
+  <div pied>
+    <button class="btn btn-light" (click)="modalOuvert.set(false)">Annuler</button>
+    <button class="btn btn-primary" form="form-cat" type="submit" [disabled]="enregistrement()">
+      Enregistrer
+    </button>
+  </div>
+</app-modal>

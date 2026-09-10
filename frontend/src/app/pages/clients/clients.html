@@ -1,0 +1,126 @@
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <h1 class="h3 mb-0 me-auto">Clients</h1>
+  @if (peutModifier) {
+    <button class="btn btn-primary" (click)="ouvrirCreation()">
+      <i class="bi bi-plus-lg me-1"></i>Nouveau client
+    </button>
+  }
+</div>
+
+<div class="input-group mb-3" style="max-width: 360px">
+  <span class="input-group-text"><i class="bi bi-search"></i></span>
+  <input
+    type="search"
+    class="form-control"
+    placeholder="Nom, code, téléphone…"
+    [value]="recherche()"
+    (input)="recherche.set($any($event.target).value)"
+    (keyup.enter)="charger()"
+  />
+  <button class="btn btn-outline-secondary" (click)="charger()">Rechercher</button>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Code</th>
+          <th>Nom</th>
+          <th>Type</th>
+          <th>Téléphone</th>
+          <th class="text-end">Solde dû</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (chargement()) {
+          <tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+        } @else if (clients().length === 0) {
+          <tr><td colspan="6" class="text-center text-muted py-4">Aucun client.</td></tr>
+        } @else {
+          @for (c of clients(); track c.id) {
+            <tr>
+              <td class="text-muted">{{ c.code }}</td>
+              <td>
+                {{ c.nom }}
+                @if (!c.actif) { <span class="badge text-bg-light ms-1">inactif</span> }
+              </td>
+              <td class="text-capitalize">{{ c.type }}</td>
+              <td>{{ c.telephone || '—' }}</td>
+              <td class="text-end">{{ (c.solde ?? 0) | montant }}</td>
+              <td class="text-end">
+                @if (peutModifier) {
+                  <button class="btn btn-sm btn-outline-secondary me-1" (click)="ouvrirEdition(c)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="supprimer(c)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-modal
+  [ouvert]="modalOuvert()"
+  [titre]="editionId() ? 'Modifier le client' : 'Nouveau client'"
+  (fermer)="modalOuvert.set(false)"
+>
+  <form [formGroup]="form" id="form-client" (ngSubmit)="enregistrer()">
+    <div class="row g-3">
+      <div class="col-12">
+        <label class="form-label">Nom / Raison sociale *</label>
+        <input class="form-control" formControlName="nom" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Type</label>
+        <select class="form-select" formControlName="type">
+          <option value="particulier">Particulier</option>
+          <option value="entreprise">Entreprise</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Téléphone</label>
+        <input class="form-control" formControlName="telephone" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">E-mail</label>
+        <input type="email" class="form-control" formControlName="email" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">NINEA</label>
+        <input class="form-control" formControlName="ninea" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Adresse</label>
+        <input class="form-control" formControlName="adresse" />
+      </div>
+      <div class="col-12">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" rows="2" formControlName="notes"></textarea>
+      </div>
+      <div class="col-12 form-check ms-2">
+        <input type="checkbox" class="form-check-input" id="actif" formControlName="actif" />
+        <label class="form-check-label" for="actif">Client actif</label>
+      </div>
+    </div>
+  </form>
+
+  <div pied>
+    <button class="btn btn-light" (click)="modalOuvert.set(false)">Annuler</button>
+    <button
+      class="btn btn-primary"
+      form="form-client"
+      type="submit"
+      [disabled]="enregistrement()"
+    >
+      Enregistrer
+    </button>
+  </div>
+</app-modal>

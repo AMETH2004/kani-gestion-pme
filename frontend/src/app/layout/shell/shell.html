@@ -1,0 +1,52 @@
+<div class="app-shell">
+  <aside class="sidebar" [class.ouvert]="menuOuvert()">
+    <div class="sidebar-header">
+      <span class="logo-badge">K</span>
+      <span class="fw-bold">Kani</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (lien of liensVisibles; track lien.route) {
+        <a
+          [routerLink]="lien.route"
+          routerLinkActive="actif"
+          class="nav-lien"
+          (click)="fermerMenu()"
+        >
+          <i class="bi" [class]="lien.icone"></i>
+          <span>{{ lien.libelle }}</span>
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <div class="backdrop d-lg-none" [class.visible]="menuOuvert()" (click)="fermerMenu()"></div>
+
+  <div class="app-main">
+    <header class="topbar">
+      <button class="btn btn-light d-lg-none" (click)="basculerMenu()">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="ms-auto dropdown">
+        <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+          <i class="bi bi-person-circle me-1"></i>
+          {{ user()?.name }}
+          <span class="badge text-bg-secondary ms-1">{{ role() }}</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><span class="dropdown-item-text small text-muted">{{ user()?.email }}</span></li>
+          <li><hr class="dropdown-divider" /></li>
+          <li>
+            <button class="dropdown-item" (click)="deconnexion()">
+              <i class="bi bi-box-arrow-right me-2"></i>Se déconnecter
+            </button>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <main class="app-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

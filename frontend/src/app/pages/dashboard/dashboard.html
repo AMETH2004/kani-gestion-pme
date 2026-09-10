@@ -1,0 +1,97 @@
+<h1 class="h3 mb-4">Tableau de bord</h1>
+
+@if (chargement()) {
+  <div class="text-center py-5"><span class="spinner-border"></span></div>
+} @else if (data(); as d) {
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">CA du mois</div>
+          <div class="h4 mb-0 mt-1">{{ d.ca_mois | montant }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Encaissé ce mois</div>
+          <div class="h4 mb-0 mt-1 text-success">{{ d.encaisse_mois | montant }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Impayés</div>
+          <div class="h4 mb-0 mt-1 text-danger">{{ d.impayes_total | montant }}</div>
+          <div class="small text-muted">{{ d.nb_factures_impayees }} facture(s)</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small text-uppercase">Stock bas</div>
+          <div class="h4 mb-0 mt-1" [class.text-warning]="d.produits_stock_bas > 0">
+            {{ d.produits_stock_bas }}
+          </div>
+          <a routerLink="/produits" class="small">Voir les produits</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 text-muted text-uppercase mb-4">Chiffre d'affaires — 6 mois</h2>
+          <div class="d-flex align-items-end gap-3" style="height: 180px">
+            @for (m of d.ca_6_mois; track m.mois) {
+              <div class="flex-fill text-center d-flex flex-column justify-content-end h-100">
+                <div class="small text-muted mb-1">{{ (m.montant / 1000) | number: '1.0-0' }}k</div>
+                <div
+                  class="bg-primary rounded-top mx-auto"
+                  [style.height.%]="hauteurBarre(m.montant)"
+                  style="width: 70%; min-height: 2px"
+                ></div>
+                <div class="small text-muted mt-1">{{ m.mois }}</div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 text-muted text-uppercase mb-3">Dernières factures</h2>
+          @if (d.dernieres_factures.length === 0) {
+            <p class="text-muted small mb-0">Aucune facture pour le moment.</p>
+          } @else {
+            <div class="list-group list-group-flush">
+              @for (f of d.dernieres_factures; track f.id) {
+                <a
+                  [routerLink]="['/factures', f.id]"
+                  class="list-group-item list-group-item-action px-0 d-flex justify-content-between align-items-center"
+                >
+                  <span>
+                    <strong>{{ f.numero }}</strong>
+                    <span class="text-muted small d-block">{{ f.client?.nom }}</span>
+                  </span>
+                  <span class="text-end">
+                    <span class="d-block">{{ f.montant_ttc | montant }}</span>
+                    <app-statut-badge [statut]="f.statut" />
+                  </span>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+} @else {
+  <div class="alert alert-warning">Impossible de charger le tableau de bord.</div>
+}

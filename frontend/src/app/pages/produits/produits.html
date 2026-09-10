@@ -1,0 +1,195 @@
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <h1 class="h3 mb-0 me-auto">Produits</h1>
+  @if (peutModifier) {
+    <button class="btn btn-primary" (click)="ouvrirCreation()">
+      <i class="bi bi-plus-lg me-1"></i>Nouveau produit
+    </button>
+  }
+</div>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <div class="input-group" style="max-width: 320px">
+    <span class="input-group-text"><i class="bi bi-search"></i></span>
+    <input
+      type="search"
+      class="form-control"
+      placeholder="Référence ou désignation…"
+      [value]="recherche()"
+      (input)="recherche.set($any($event.target).value)"
+      (keyup.enter)="charger()"
+    />
+  </div>
+  <button
+    class="btn"
+    [class.btn-warning]="filtreStockBas()"
+    [class.btn-outline-warning]="!filtreStockBas()"
+    (click)="basculerStockBas()"
+  >
+    <i class="bi bi-exclamation-triangle me-1"></i>Stock bas
+  </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Réf.</th>
+          <th>Désignation</th>
+          <th>Catégorie</th>
+          <th class="text-end">Prix vente</th>
+          <th class="text-end">Stock</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (chargement()) {
+          <tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+        } @else if (produits().length === 0) {
+          <tr><td colspan="6" class="text-center text-muted py-4">Aucun produit.</td></tr>
+        } @else {
+          @for (p of produits(); track p.id) {
+            <tr>
+              <td class="text-muted">{{ p.reference }}</td>
+              <td>
+                {{ p.designation }}
+                @if (!p.actif) { <span class="badge text-bg-light ms-1">inactif</span> }
+              </td>
+              <td>{{ p.categorie?.nom || '—' }}</td>
+              <td class="text-end">{{ p.prix_vente | montant }}</td>
+              <td class="text-end">
+                @if (p.gerer_stock) {
+                  <span [class.text-danger]="p.stock_bas" [class.fw-semibold]="p.stock_bas">
+                    {{ p.stock_actuel }} {{ p.unite }}
+                  </span>
+                } @else {
+                  <span class="text-muted">non suivi</span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (peutModifier) {
+                  @if (p.gerer_stock) {
+                    <button class="btn btn-sm btn-outline-primary me-1" title="Mouvement de stock" (click)="ouvrirStock(p)">
+                      <i class="bi bi-arrow-left-right"></i>
+                    </button>
+                  }
+                  <button class="btn btn-sm btn-outline-secondary me-1" (click)="ouvrirEdition(p)">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="supprimer(p)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<app-modal
+  [ouvert]="modalOuvert()"
+  [titre]="editionId() ? 'Modifier le produit' : 'Nouveau produit'"
+  taille="lg"
+  (fermer)="modalOuvert.set(false)"
+>
+  <form [formGroup]="form" id="form-produit" (ngSubmit)="enregistrer()">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Référence *</label>
+        <input class="form-control" formControlName="reference" />
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">Désignation *</label>
+        <input class="form-control" formControlName="designation" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Catégorie</label>
+        <select class="form-select" formControlName="categorie_id">
+          <option [ngValue]="null">— Aucune —</option>
+          @for (c of categories(); track c.id) {
+            <option [ngValue]="c.id">{{ c.nom }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Unité</label>
+        <input class="form-control" formControlName="unite" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">TVA (%)</label>
+        <input type="number" class="form-control" formControlName="taux_tva" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Prix d'achat</label>
+        <input type="number" class="form-control" formControlName="prix_achat" />
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Prix de vente *</label>
+        <input type="number" class="form-control" formControlName="prix_vente" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Stock initial</label>
+        <input type="number" class="form-control" formControlName="stock_actuel" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Seuil alerte</label>
+        <input type="number" class="form-control" formControlName="stock_alerte" />
+      </div>
+      <div class="col-12 d-flex gap-4">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="gs" formControlName="gerer_stock" />
+          <label class="form-check-label" for="gs">Suivre le stock</label>
+        </div>
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="pa" formControlName="actif" />
+          <label class="form-check-label" for="pa">Produit actif</label>
+        </div>
+      </div>
+    </div>
+  </form>
+  <div pied>
+    <button class="btn btn-light" (click)="modalOuvert.set(false)">Annuler</button>
+    <button class="btn btn-primary" form="form-produit" type="submit" [disabled]="enregistrement()">
+      Enregistrer
+    </button>
+  </div>
+</app-modal>
+
+<app-modal
+  [ouvert]="modalStock() !== null"
+  [titre]="'Mouvement de stock — ' + (modalStock()?.designation ?? '')"
+  (fermer)="modalStock.set(null)"
+>
+  <form [formGroup]="formStock" id="form-mvt" (ngSubmit)="enregistrerMouvement()">
+    <p class="text-muted small">
+      Stock actuel : <strong>{{ modalStock()?.stock_actuel }} {{ modalStock()?.unite }}</strong>
+    </p>
+    <div class="mb-3">
+      <label class="form-label">Type</label>
+      <select class="form-select" formControlName="type">
+        <option value="entree">Entrée (réapprovisionnement)</option>
+        <option value="sortie">Sortie (perte, casse, retrait)</option>
+        <option value="ajustement">Ajustement (valeur exacte après inventaire)</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">
+        {{ formStock.value.type === 'ajustement' ? 'Nouveau stock' : 'Quantité' }}
+      </label>
+      <input type="number" class="form-control" formControlName="quantite" />
+    </div>
+    <div class="mb-0">
+      <label class="form-label">Motif</label>
+      <input class="form-control" formControlName="motif" />
+    </div>
+  </form>
+  <div pied>
+    <button class="btn btn-light" (click)="modalStock.set(null)">Annuler</button>
+    <button class="btn btn-primary" form="form-mvt" type="submit" [disabled]="mouvementEnCours()">
+      Valider le mouvement
+    </button>
+  </div>
+</app-modal>

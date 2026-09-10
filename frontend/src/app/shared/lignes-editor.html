@@ -1,0 +1,84 @@
+<div [formGroup]="parent">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead class="table-light">
+        <tr>
+          <th style="min-width: 180px">Produit</th>
+          <th style="min-width: 160px">Désignation</th>
+          <th class="text-end" style="width: 90px">Qté</th>
+          <th class="text-end" style="width: 120px">P.U. HT</th>
+          <th class="text-end" style="width: 90px">TVA %</th>
+          <th class="text-end" style="width: 120px">Montant HT</th>
+          <th style="width: 40px"></th>
+        </tr>
+      </thead>
+      <tbody formArrayName="lignes">
+        @for (ligne of lignes.controls; track $index; let i = $index) {
+          <tr [formGroupName]="i">
+            <td>
+              <select
+                class="form-select form-select-sm"
+                formControlName="produit_id"
+                (change)="surChoixProduit(i, $any($event.target).value)"
+                [attr.disabled]="lectureSeule ? true : null"
+              >
+                <option [ngValue]="null">— Libre —</option>
+                @for (p of produits; track p.id) {
+                  <option [ngValue]="p.id">{{ p.reference }} — {{ p.designation }}</option>
+                }
+              </select>
+            </td>
+            <td><input class="form-control form-control-sm" formControlName="designation" /></td>
+            <td><input type="number" class="form-control form-control-sm text-end" formControlName="quantite" /></td>
+            <td><input type="number" class="form-control form-control-sm text-end" formControlName="prix_unitaire" /></td>
+            <td><input type="number" class="form-control form-control-sm text-end" formControlName="taux_tva" /></td>
+            <td class="text-end text-nowrap">{{ ligneHt(ligne) | montant }}</td>
+            <td>
+              @if (!lectureSeule) {
+                <button type="button" class="btn btn-sm btn-outline-danger" (click)="retirerLigne(i)">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
+            </td>
+          </tr>
+        }
+        @if (lignes.length === 0) {
+          <tr><td colspan="7" class="text-center text-muted py-3">Aucune ligne. Ajoutez un article.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (!lectureSeule) {
+    <button type="button" class="btn btn-sm btn-outline-primary mb-3" (click)="ajouterLigne()">
+      <i class="bi bi-plus-lg me-1"></i>Ajouter une ligne
+    </button>
+  }
+
+  <div class="row justify-content-end">
+    <div class="col-md-5">
+      <div class="d-flex justify-content-between py-1">
+        <span class="text-muted">Total HT</span>
+        <span>{{ totaux().ht | montant }}</span>
+      </div>
+      <div class="d-flex justify-content-between align-items-center py-1">
+        <span class="text-muted">Remise</span>
+        <input
+          type="number"
+          class="form-control form-control-sm text-end"
+          style="max-width: 130px"
+          formControlName="remise"
+          [attr.disabled]="lectureSeule ? true : null"
+        />
+      </div>
+      <div class="d-flex justify-content-between py-1">
+        <span class="text-muted">TVA</span>
+        <span>{{ totaux().tva | montant }}</span>
+      </div>
+      <div class="d-flex justify-content-between py-2 border-top fw-bold fs-5">
+        <span>Total TTC</span>
+        <span>{{ totaux().ttc | montant }}</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,161 @@
+<h1 class="h3 mb-3">Paramètres</h1>
+
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="!ongletUtilisateurs()" (click)="ongletUtilisateurs.set(false)">
+      <i class="bi bi-building me-1"></i>Entreprise
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" [class.active]="ongletUtilisateurs()" (click)="ongletUtilisateurs.set(true)">
+      <i class="bi bi-people me-1"></i>Utilisateurs
+    </button>
+  </li>
+</ul>
+
+@if (!ongletUtilisateurs()) {
+  <form [formGroup]="formEntreprise" (ngSubmit)="enregistrerEntreprise()" class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Raison sociale *</label>
+          <input class="form-control" formControlName="raison_sociale" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Devise</label>
+          <input class="form-control" formControlName="devise" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">NINEA</label>
+          <input class="form-control" formControlName="ninea" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">RCCM</label>
+          <input class="form-control" formControlName="rccm" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">TVA par défaut (%)</label>
+          <input type="number" class="form-control" formControlName="taux_tva_defaut" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Téléphone</label>
+          <input class="form-control" formControlName="telephone" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">E-mail</label>
+          <input class="form-control" formControlName="email" />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Adresse</label>
+          <input class="form-control" formControlName="adresse" />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Pied de page des documents (PDF)</label>
+          <textarea class="form-control" rows="2" formControlName="pied_de_page"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer bg-white text-end">
+      <button type="submit" class="btn btn-primary" [disabled]="enregistrementEntreprise()">
+        Enregistrer
+      </button>
+    </div>
+  </form>
+} @else {
+  <div class="d-flex mb-3">
+    <button class="btn btn-primary ms-auto" (click)="ouvrirCreationUser()">
+      <i class="bi bi-plus-lg me-1"></i>Nouvel utilisateur
+    </button>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Nom</th>
+            <th>E-mail</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (u of utilisateurs(); track u.id) {
+            <tr>
+              <td>{{ u.name }}<span class="d-block text-muted small">{{ u.poste }}</span></td>
+              <td>{{ u.email }}</td>
+              <td><span class="badge text-bg-secondary">{{ u.roles?.[0]?.name }}</span></td>
+              <td>
+                @if (u.actif) {
+                  <span class="badge text-bg-success">actif</span>
+                } @else {
+                  <span class="badge text-bg-light">désactivé</span>
+                }
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-secondary me-1" (click)="ouvrirEditionUser(u)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="supprimerUser(u)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <app-modal
+    [ouvert]="modalUser()"
+    [titre]="editionUserId() ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur'"
+    (fermer)="modalUser.set(false)"
+  >
+    <form [formGroup]="formUser" id="form-user" (ngSubmit)="enregistrerUser()">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nom *</label>
+          <input class="form-control" formControlName="name" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">E-mail *</label>
+          <input type="email" class="form-control" formControlName="email" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Téléphone</label>
+          <input class="form-control" formControlName="telephone" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Poste</label>
+          <input class="form-control" formControlName="poste" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Rôle *</label>
+          <select class="form-select" formControlName="role">
+            @for (r of roles(); track r) {
+              <option [value]="r">{{ r }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">
+            Mot de passe {{ editionUserId() ? '(laisser vide = inchangé)' : '*' }}
+          </label>
+          <input type="text" class="form-control" formControlName="password" autocomplete="new-password" />
+        </div>
+        <div class="col-12 form-check ms-2">
+          <input type="checkbox" class="form-check-input" id="user-actif" formControlName="actif" />
+          <label class="form-check-label" for="user-actif">Compte actif</label>
+        </div>
+      </div>
+    </form>
+    <div pied>
+      <button class="btn btn-light" (click)="modalUser.set(false)">Annuler</button>
+      <button class="btn btn-primary" form="form-user" type="submit" [disabled]="enregistrementUser()">
+        Enregistrer
+      </button>
+    </div>
+  </app-modal>
+}

@@ -1,0 +1,64 @@
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+  <h1 class="h3 mb-0 me-auto">Factures</h1>
+  @if (peutModifier) {
+    <a routerLink="/factures/nouveau" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Nouvelle facture
+    </a>
+  }
+</div>
+
+<select class="form-select mb-3" style="max-width: 240px" (change)="majStatut($any($event.target).value)">
+  <option value="">Tous les statuts</option>
+  <option value="brouillon">Brouillon</option>
+  <option value="envoyee">Envoyée</option>
+  <option value="partiellement_payee">Partiellement payée</option>
+  <option value="payee">Payée</option>
+  <option value="en_retard">En retard</option>
+  <option value="annulee">Annulée</option>
+</select>
+
+<div class="card border-0 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Numéro</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th class="text-end">TTC</th>
+          <th class="text-end">Reste dû</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (chargement()) {
+          <tr><td colspan="7" class="text-center py-4"><span class="spinner-border spinner-border-sm"></span></td></tr>
+        } @else if (factures().length === 0) {
+          <tr><td colspan="7" class="text-center text-muted py-4">Aucune facture.</td></tr>
+        } @else {
+          @for (f of factures(); track f.id) {
+            <tr>
+              <td><a [routerLink]="['/factures', f.id]"><strong>{{ f.numero }}</strong></a></td>
+              <td>{{ f.client?.nom }}</td>
+              <td>{{ f.date_facture | date: 'dd/MM/yyyy' }}</td>
+              <td class="text-end">{{ f.montant_ttc | montant }}</td>
+              <td class="text-end" [class.text-danger]="(f.reste_a_payer ?? 0) > 0">
+                {{ (f.reste_a_payer ?? (f.montant_ttc - f.montant_paye)) | montant }}
+              </td>
+              <td><app-statut-badge [statut]="f.statut" /></td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-secondary me-1" (click)="pdf(f)" title="PDF">
+                  <i class="bi bi-file-earmark-pdf"></i>
+                </button>
+                <a [routerLink]="['/factures', f.id]" class="btn btn-sm btn-outline-primary" title="Ouvrir">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
